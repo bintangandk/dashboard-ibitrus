@@ -9,25 +9,18 @@
             startDate: @json($startDate->toDateString()),
             endDate: @json($endDate->toDateString()),
             topProductsByBranch: @json($topProductsByBranch),
+            topProductsByBranchAndCategory: @json($topProductsByBranchAndCategory),
+            categoriesByBranch: @json($categoriesByBranch),
         };
     </script>
 
     <div class="col-12">
-        {{-- <section class="dashboard-intro mb-4">
-            <div>
-                <span class="eyebrow">PERFORMA OPERASIONAL</span>
-                <h2 class="page-section-title mb-1">Ringkasan penjualan seluruh cabang</h2>
-                <p class="text-muted-green mb-0">Pantau kontribusi Kota A sampai Kota D dan tentukan prioritas harian.</p>
-            </div>
-        </section> --}}
-
         <section class="row g-4 mb-4" aria-label="Ringkasan penjualan">
             <div class="col-sm-6 col-xl-3">
                 <article class="card metric-card h-100">
                     <div class="metric-icon metric-icon-dark"><i class="bi bi-wallet2"></i></div><span class="stat-label">Total
                         penjualan</span><strong class="metric-value">Rp
-                        {{ number_format($totalSales, 0, ',', '.') }}</strong><span class="trend-badge trend-up"><i
-                            class="bi bi-arrow-up-right"></i> 18,6% bulan ini</span>
+                        {{ number_format($totalSales, 0, ',', '.') }}</strong><span class="trend-badge trend-up"> </span>
                 </article>
             </div>
             <div class="col-sm-6 col-xl-3">
@@ -44,7 +37,7 @@
                     <div class="metric-icon metric-icon-orange"><i class="bi bi-bag-check"></i></div><span
                         class="stat-label">Total transaksi</span><strong
                         class="metric-value">{{ number_format($totalTransactions, 0, ',', '.') }}</strong><span
-                        class="trend-badge trend-up"><i class="bi bi-arrow-up-right"></i> 12,4% vs bulan lalu</span>
+                        class="trend-badge trend-up"><i class="bi bi-arrow-up-right"></i> </span>
                 </article>
             </div>
             <div class="col-sm-6 col-xl-3">
@@ -96,10 +89,12 @@
                     </div>
                     <div class="card-body pt-0">
                         <div id="branch-performance-chart" aria-label="Grafik performa cabang"></div>
-                        <div class="branch-legend"><span><i class="legend-dot legend-a"></i>Kota A</span><span><i
-                                    class="legend-dot legend-b"></i>Kota B</span><span><i
-                                    class="legend-dot legend-c"></i>Kota C</span><span><i
-                                    class="legend-dot legend-d"></i>Kota D</span></div>
+                        <div class="branch-legend">
+                            @foreach ($branchSales as $index => $branch)
+                                <span><i class="legend-dot legend-{{ chr(97 + $index) }}"></i>{{ $branch['name'] }}
+                                    <strong>{{ number_format($branch['contribution'], 1, ',', '.') }}%</strong></span>
+                            @endforeach
+                        </div>
                     </div>
                 </article>
             </div>
@@ -112,7 +107,7 @@
                         <div>
                             <h2 class="card-title mb-1">Total penjualan per cabang</h2>
                             <p class="text-muted-green small mb-0">Perbandingan realisasi bulan berjalan</p>
-                        </div><span class="badge-soft-success">Target tercapai 86%</span>
+                        </div><span class="badge-soft-success"></span>
                     </div>
                     <div class="card-body pt-0">
                         <div id="branch-sales-chart" aria-label="Grafik penjualan per cabang"></div>
@@ -125,54 +120,54 @@
                         <div>
                             <h2 class="card-title mb-1">Produk terlaris</h2>
                             <p class="text-muted-green small mb-0">Produk dengan kontribusi tertinggi</p>
-                        </div><select class="form-select form-select-sm dashboard-select" id="product-branch"
-                            aria-label="Pilih cabang produk">
-                            <option value="all" selected>Semua</option>
+                        </div>
+                        <select class="form-select form-select-sm dashboard-select" id="category-product-branch"
+                            aria-label="Pilih cabang untuk filter kategori produk">
+                            <option value="all" selected>Semua cabang</option>
                             @foreach ($branchSales as $branch)
                                 <option value="{{ $branch['id'] }}">{{ $branch['name'] }}</option>
                             @endforeach
                         </select>
+                        <select class="form-select form-select-sm dashboard-select" id="category-product-category"
+                            aria-label="Pilih kategori produk" disabled>
+                            <option value="all" selected>Semua kategori</option>
+                        </select>
                     </div>
                     <div class="card-body pt-0">
-                        <div id="top-products-list" class="top-products-list"></div>
+                        <div id="category-top-products-list" class="top-products-list"></div>
                     </div>
                 </article>
             </div>
         </section>
 
-        <section class="row g-4 mb-4">
+        {{-- <section class="row g-4 mb-4" aria-label="Produk terlaris berdasarkan kategori">
             <div class="col-12">
-                <article class="card recommendation-card">
-                    <div class="card-body p-4">
-                        {{-- <div class="d-flex flex-column flex-lg-row justify-content-between gap-4">
-                            <div class="recommendation-heading">
-                                <div class="metric-icon metric-icon-orange mb-3"><i class="bi bi-lightbulb"></i></div>
-                                <span class="eyebrow">REKOMENDASI TINDAKAN</span>
-                                <h2 class="card-title mt-2 mb-1">Prioritaskan pemulihan Kota D</h2>
-                                <p class="text-muted-green mb-0">Penjualan turun 8,2% dan conversion rate berada di bawah
-                                    rata-rata jaringan.</p>
-                            </div>
-                            <div class="recommendation-grid">
-                                <div class="recommendation-item"><span class="recommendation-number">01</span>
-                                    <div><strong>Audit stok</strong>
-                                        <p>Fokus pada produk yang kehilangan penjualan.</p>
-                                    </div>
-                                </div>
-                                <div class="recommendation-item"><span class="recommendation-number">02</span>
-                                    <div><strong>Aktifkan promo lokal</strong>
-                                        <p>Gunakan bundling produk terlaris minggu ini.</p>
-                                    </div>
-                                </div>
-                                <div class="recommendation-item"><span class="recommendation-number">03</span>
-                                    <div><strong>Review target tim</strong>
-                                        <p>Evaluasi pipeline dan follow-up pelanggan.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div> --}}
+                <article class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <h2 class="card-title mb-1">Produk terlaris berdasarkan kategori</h2>
+                            <p class="text-muted-green small mb-0">Pilih cabang terlebih dahulu, lalu filter berdasarkan
+                                kategori produk.</p>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap justify-content-end">
+                            <select class="form-select form-select-sm dashboard-select" id="category-product-branch"
+                                aria-label="Pilih cabang untuk filter kategori produk">
+                                <option value="all" selected>Semua cabang</option>
+                                @foreach ($branchSales as $branch)
+                                    <option value="{{ $branch['id'] }}">{{ $branch['name'] }}</option>
+                                @endforeach
+                            </select>
+                            <select class="form-select form-select-sm dashboard-select" id="category-product-category"
+                                aria-label="Pilih kategori produk" disabled>
+                                <option value="all" selected>Semua kategori</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body pt-0">
+                        <div id="category-top-products-list" class="top-products-list"></div>
                     </div>
                 </article>
             </div>
-        </section>
+        </section> --}}
     </div>
 @endsection

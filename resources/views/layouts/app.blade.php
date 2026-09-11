@@ -71,38 +71,15 @@
                 <button class="sidebar-toggle-btn me-2" id="sidebar-toggle" aria-label="Toggle Navigation">
                     <i class="bi bi-list"></i>
                 </button>
-
-                <!-- Quick Actions Dropdown -->
-                {{-- <div class="dropdown ms-2">
-                    <button class="btn-quick-action dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                        aria-expanded="false" id="quick-actions-dropdown">
-                        <i class="bi bi-plus-lg"></i>
-                        <span>Create</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-quick-action" aria-labelledby="quick-actions-dropdown">
-                        <li class="dropdown-header">Quick Action Shortcuts</li>
-                        <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-plus"></i> New
-                                Invoice</a></li>
-                        <li><a class="dropdown-item" href="#"><i class="bi bi-person-plus"></i> New User</a>
-                        </li>
-                        <li><a class="dropdown-item" href="#"><i class="bi bi-box-seam"></i> New Product</a>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> System Settings</a>
-                        </li>
-                    </ul>
-                </div> --}}
             </div>
 
             <!-- Mid navbar: search pill -->
             <div class="navbar-search-wrapper">
-                <input type="text" class="navbar-search-input" placeholder="Search anything in Spark..."
+                {{-- <input type="text" class="navbar-search-input" placeholder="Search anything in Spark..."
                     id="main-search">
                 <button class="navbar-search-btn" aria-label="Search">
                     <i class="bi bi-search"></i>
-                </button>
+                </button> --}}
             </div>
 
             <!-- Right actions -->
@@ -191,9 +168,11 @@
         <!-- START: Dashboard Header Banner -->
         <div class="page-header">
             <div>
-                <h1 class="page-title">Dashboard</h1>
-                <p class="page-subtitle">Ringkasan penjualan seluruh cabang.</p>
-                <p class="page-subtitle">Pantau kontribusi Kota A sampai Kota D dan tentukan prioritas harian.</p>
+                <h1 class="page-title">@yield('page-title', 'Dashboard')</h1>
+                <p class="page-subtitle">@yield('page-subtitle', 'Ringkasan penjualan seluruh cabang.')</p>
+                @hasSection('page-description')
+                    <p class="page-subtitle">@yield('page-description')</p>
+                @endif
             </div>
         </div>
         <!-- END: Dashboard Header Banner -->

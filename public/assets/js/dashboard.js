@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const branchSales = branchSalesData.map(branch => branch.total_sales);
     const salesTrend = dashboardData.salesTrend ?? {};
     const topProductsByBranch = dashboardData.topProductsByBranch ?? {};
+    const topProductsByBranchAndCategory = dashboardData.topProductsByBranchAndCategory ?? {};
+    const categoriesByBranch = dashboardData.categoriesByBranch ?? {};
     const trendSeries = {
         monthly: {
             labels: (salesTrend.monthly ?? []).map(month => formatMonthLabel(month.month)),
@@ -17,7 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
             hasData: (salesTrend.weekly ?? []).some(week => week.total_sales > 0),
         },
     };
-    const palette = ['#B4F105', '#5A8F79', '#F97316', '#EF4444'];
+    // const palette = ['#B4F105', '#5A8F79', '#F97316', '#EF4444'];
+    const palette = ['#829548', '#5A8F79', '#F97316', '#EF4444'];
 
     const chartDefaults = {
         chart: { toolbar: { show: false }, fontFamily: 'Plus Jakarta Sans, sans-serif' },
@@ -36,13 +39,20 @@ document.addEventListener('DOMContentLoaded', () => {
             plotOptions: { bar: { horizontal: true, borderRadius: 5, distributed: true, barHeight: '48%' } },
             xaxis: { categories: branchNames, labels: { formatter: value => formatCurrency(value) } },
             legend: { show: false },
-            tooltip: { ...chartDefaults.tooltip, y: { formatter: value => formatCurrency(value) } },
+            tooltip: {
+                ...chartDefaults.tooltip,
+                shared: false,
+                intersect: true,
+                y: { formatter: value => formatCurrency(value) },
+            },
         }).render();
     }
 
     const trendChart = renderSalesTrend();
     renderBranchPerformance();
     renderTopProducts();
+    updateCategoryOptions();
+    renderCategoryTopProducts();
 
     document.querySelector('#trend-period')?.addEventListener('change', event => {
         const period = event.target.value;
@@ -52,6 +62,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelector('#product-branch')?.addEventListener('change', event => {
         renderTopProducts(event.target.value);
+    });
+
+    document.querySelector('#category-product-branch')?.addEventListener('change', event => {
+        updateCategoryOptions(event.target.value);
+        renderCategoryTopProducts(event.target.value);
+    });
+
+    document.querySelector('#category-product-category')?.addEventListener('change', event => {
+        const branch = document.querySelector('#category-product-branch')?.value ?? 'all';
+        renderCategoryTopProducts(branch, event.target.value);
     });
 
     initializeDateRangeFilter();
@@ -67,9 +87,15 @@ document.addEventListener('DOMContentLoaded', () => {
             colors: ['#072F1F'],
             stroke: { curve: 'smooth', width: 3 },
             fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.04, stops: [0, 90, 100] } },
+            markers: { size: 0, hover: { size: 6 } },
             xaxis: { categories: trendSeries.monthly.labels },
             yaxis: { labels: { show: false } },
-            tooltip: { ...chartDefaults.tooltip, y: { formatter: value => formatCurrency(value) } },
+            tooltip: {
+                ...chartDefaults.tooltip,
+                shared: false,
+                intersect: false,
+                y: { formatter: value => formatCurrency(value) },
+            },
             noData: { text: 'Tidak ada data pada rentang tanggal ini' },
         });
 
@@ -88,7 +114,23 @@ document.addEventListener('DOMContentLoaded', () => {
             labels: branchNames,
             colors: palette,
             legend: { show: false },
-            plotOptions: { pie: { donut: { size: '72%', labels: { show: true, total: { show: true, label: 'Total', formatter: () => formatCurrency(branchSales.reduce((total, value) => total + value, 0)) } } } } },
+            tooltip: { ...chartDefaults.tooltip, y: { formatter: value => formatCurrency(value) } },
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '72%',
+                        labels: {
+                            show: true,
+                            value: { formatter: value => formatCurrency(value) },
+                            total: {
+                                show: true,
+                                label: 'Total Penjualan',
+                                formatter: () => formatCurrency(branchSales.reduce((total, value) => total + value, 0)),
+                            },
+                        },
+                    },
+                },
+            },
         }).render();
     }
 
@@ -106,6 +148,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 <strong class="product-revenue">${formatCurrency(product.total_sales)}</strong>
             </div>`).join('')
             : '<p class="text-muted-green small mb-0">Belum ada data penjualan.</p>';
+    }
+
+    function renderCategoryTopProducts(branch = 'all', category = 'all') {
+        const element = document.querySelector('#category-top-products-list');
+        if (!element) return;
+
+        const products = topProductsByBranchAndCategory[branch]?.[category] ?? [];
+
+        element.innerHTML = products.length > 0
+            ? products.map((product, index) => `
+            <div class="top-product-row">
+                <span class="product-rank">0${index + 1}</span>
+                <div class="product-info"><strong>${product.product_name}</strong><span>${formatQuantity(product.total_qty)} unit</span></div>
+                <strong class="product-revenue">${formatCurrency(product.total_sales)}</strong>
+            </div>`).join('')
+            : '<p class="text-muted-green small mb-0">Belum ada data penjualan untuk filter ini.</p>';
+    }
+
+    function updateCategoryOptions(branch = 'all') {
+        const select = document.querySelector('#category-product-category');
+        if (!select) return;
+
+        const categories = categoriesByBranch[branch] ?? [];
+        select.innerHTML = '<option value="all" selected>Semua kategori</option>'
+            + categories.map(category => `<option value="${category.id}">${category.name}</option>`).join('');
+        select.disabled = categories.length === 0;
     }
 
     function initializeDateRangeFilter() {
@@ -149,7 +217,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function formatCurrency(value) {
-        return `Rp ${new Intl.NumberFormat('id-ID').format(value)}`;
+        const amount = Number(value);
+        return Number.isFinite(amount)
+            ? `Rp ${new Intl.NumberFormat('id-ID').format(amount)}`
+            : 'Rp 0';
     }
 
     function formatQuantity(value) {
